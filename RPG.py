@@ -135,6 +135,27 @@ class Character(object):
             print 'You wake up well rested.'
             self.health += 10
 
+    def explore(self):
+        self.stamina = max(0,self.stamina-1)
+        roll = random.randint(0,2)
+        if roll == 0:
+            print "You didn't find anything."
+        elif roll == 1:
+            print "You were found by the enemy."
+            encounter(self,Enemy('standard',self.level,random.choice(enemies)),int(100+self.level**1.5))
+        elif roll == 2:
+            print "You stumbled upon some treasure!"
+            #TODO: Add loot to treasure rolls. Better treasure for boss rolls.
+            bossroll = random.randint(0,3)
+            if bossroll == 3:
+                bossSelect = random.choice(bosses)
+                print "It is guarded by a fearsome " + bossSelect + '.'
+                encounter(self,Enemy('elite',self.level,bossSelect),int(300+self.level**1.5))
+            else:
+                print 'You took the lone guard unawares' + '.'
+                encounter(self,Enemy('standard',self.level,random.choice(enemies)),int(100+self.level**1.5))
+        self.stamina_check()
+
             
 class Weapon(object):
     def __init__(self,damage):
@@ -266,26 +287,9 @@ def start():
         elif choice == 'hunt':
             c.hunt()
         elif choice == 'explore':
-            c.stamina = max(0,c.stamina-1)
-            roll = random.randint(0,2)
-            if roll == 0:
-                print "You didn't find anything."
-            elif roll == 1:
-                print "You were found by the enemy."
-                encounter(c,Enemy('standard',c.level,random.choice(enemies)),int(100+c.level**1.5))
-            elif roll == 2:
-                print "You stumbled upon some treasure!"
-                #TODO: Add loot to treasure rolls. Better treasure for boss rolls.
-                bossroll = random.randint(0,3)
-                if bossroll == 3:
-                    bossSelect = random.choice(bosses)
-                    print "It is guarded by a fearsome " + bossSelect + '.'
-                    encounter(c,Enemy('elite',c.level,bossSelect),int(300+c.level**1.5))
-                else:
-                    print 'You took the lone guard unawares' + '.'
-                    encounter(c,Enemy('standard',c.level,random.choice(enemies)),int(100+c.level**1.5))
-            c.stamina_check()
-        elif choice == 'd': c.levelup(c.spec)        
+            c.explore()
+        elif choice == 'd':
+            c.levelup(c.spec)        
         elif choice == 'status':
             print c
         elif choice == 'attributes':
