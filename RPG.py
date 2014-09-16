@@ -5,6 +5,7 @@ enemies = ['Troll','Goblin','Dire Wolf','Ankou']
 bosses = ['Green Dragon','Centaur Lord','Band of Thieves','Kraken']
 animals = ['Deer','Squirrel','Boar']
 weapon_types = ['Greatsword','Staff','Poleaxe']
+
 class Character(object):
     '''Class that describes the player character.'''
     def __init__(self,spec):
@@ -57,6 +58,7 @@ class Character(object):
             self.vitality += 4
         if self.level%10 == 0:
             self.max_stamina += 1
+            print "You feel yourself becoming stronger."
         self.max_health = self.vitality*15
         self.damage = (self.magic*10) + (self.strength*10)
         self.xp -= (500 + (self.level**2))
@@ -109,7 +111,7 @@ class Character(object):
                 self.stamina = min(self.stamina+1,self.max_stamina)
                 i += 1
             print 'You found a wild ' + animalSelect
-            encounter(self,Enemy('weak',self.level,animalSelect),50)
+            encounter(self,Enemy('weak',self.level,animalSelect),int(50+self.level**1.5))
 
     def stamina_check(self):
         '''Initiates a check to see if the stamina is low.'''
@@ -128,7 +130,7 @@ class Character(object):
         self.stamina = min(self.stamina+1,self.max_stamina)
         if random.randint(0,2) == 0:
             print 'You awake to a noise.'
-            ambush(self,Enemy('standard',self.level,random.choice(enemies)),100)
+            ambush(self,Enemy('standard',self.level,random.choice(enemies)),int(100+self.level**1.5))
         else:
             print 'You wake up well rested.'
             self.health += 10
@@ -270,7 +272,7 @@ def start():
                 print "You didn't find anything."
             elif roll == 1:
                 print "You were found by the enemy."
-                encounter(c,Enemy('standard',c.level,random.choice(enemies)),100)
+                encounter(c,Enemy('standard',c.level,random.choice(enemies)),int(100+c.level**1.5))
             elif roll == 2:
                 print "You stumbled upon some treasure!"
                 #TODO: Add loot to treasure rolls. Better treasure for boss rolls.
@@ -278,10 +280,10 @@ def start():
                 if bossroll == 3:
                     bossSelect = random.choice(bosses)
                     print "It is guarded by a fearsome " + bossSelect + '.'
-                    encounter(c,Enemy('elite',c.level,bossSelect),100)
+                    encounter(c,Enemy('elite',c.level,bossSelect),int(300+c.level**1.5))
                 else:
                     print 'You took the lone guard unawares' + '.'
-                    encounter(c,Enemy('standard',c.level,random.choice(enemies)),100)
+                    encounter(c,Enemy('standard',c.level,random.choice(enemies)),int(100+c.level**1.5))
             c.stamina_check()
         elif choice == 'd': c.levelup(c.spec)        
         elif choice == 'status':
