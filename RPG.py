@@ -30,6 +30,9 @@ class Character(object):
         self.health = self.vitality * 15
         self.max_health = self.vitality * 15
         self.damage = (self.magic*10) + (self.strength*10)
+        self.inventory = {}
+        #inventory[item] = amount
+        self.gold = 0
 
     def __repr__(self):
         info = ''
@@ -38,6 +41,7 @@ class Character(object):
         info += '\nDamage: ' + str(self.damage)
         info += '\nLevel: ' + str(self.level)
         info += '\nXP: ' + str(self.xp) + '/' + str(500 + self.level**2)
+        info += '\nGold: ' + str(self.gold)
         return info
     
     def levelup(self,spec):
@@ -143,6 +147,9 @@ class Character(object):
         elif roll == 1:
             print "You were found by the enemy."
             encounter(self,Enemy('standard',self.level,random.choice(enemies)),int(100+self.level**1.5))
+            gold_gain = random.randrange(0,5)
+            self.gold += gold_gain
+            print "You find " + str(gold_gain) + " gold on the enemy."
         elif roll == 2:
             print "You stumbled upon some treasure!"
             #TODO: Add loot to treasure rolls. Better treasure for boss rolls.
@@ -151,11 +158,27 @@ class Character(object):
                 bossSelect = random.choice(bosses)
                 print "It is guarded by a fearsome " + bossSelect + '.'
                 encounter(self,Enemy('elite',self.level,bossSelect),int(300+self.level**1.5))
+                gold_gain = random.randrange(25,50)
+                self.gold += gold_gain
+                print "The treasure pile contained " + str(gold_gain) + " gold."
             else:
                 print 'You took the lone guard unawares' + '.'
                 encounter(self,Enemy('standard',self.level,random.choice(enemies)),int(100+self.level**1.5))
+                gold_gain = random.randrange(25,50)
+                self.gold += gold_gain
+                print "The treasure pile contained " + str(gold_gain) + " gold."
         self.stamina_check()
 
+    def use_potion(self):
+        '''Use a potion to gain health.'''
+        if self.inventory.has_key('Potion'):
+            if self.inventory['Potion'] > 1:
+                self.inventory['Potion'] -= 1
+            else:
+                del self.inventory['Potion']
+            self.health += 50
+        else:
+            print "You search your bag for potions, but it seems you've run out."
             
 class Weapon(object):
     def __init__(self,damage):
@@ -193,7 +216,24 @@ class Enemy(object):
             return True
         else:
             return False
+
+class Shop(object):
+    def __init__(self):
+        #Need to have store inventory set up so: inventory[item] = gold
+        self.inventory = {}
+        self.inventory['Potion'] = 50
         
+    def __repr__(self):
+        repr_str = ""
+        repr_str += 'Store Inventory: \n'
+        for item in self.inventory.keys():
+            repr_str += item + ': ' + str(self.inventory[item]) + ' gold\n'
+        return repr_str
+    
+    def sell(self,item):
+        if item != 'Potion':
+            del self.inventory[item]
+            
 def encounter(char,enemy,xpGain):
     print "You've encountered a " + enemy.name + '.'
     while 1:
@@ -249,13 +289,17 @@ def ambush(char,enemy,xpGain):
             char.xp += xpGain
             print 'You gain ' + str(xpGain) + ' xp.'
             break
-        time.sleep(1)    
-    
+        time.sleep(1)
+
+
 
 def controls():
     print "Controls:"
     print "type 'status' to view your status."
     print "type 'attributes' to view your attributes"
+    print "type 'shop' to view the shop"
+    print "type 'potion' to use a potion."
+    print "type 'inventory' to view your inventory."
     print "type 'rest' to take a rest. (+1 stamina)"
     print "type 'hunt' to look for food. (chance at +3 stamina)"
     print "type 'explore' to search for treasure."
@@ -273,12 +317,14 @@ def start():
         print 'That is not a valid choice.'
         classchoice = raw_input('> ')
     c = Character(classchoice)
+    s = Shop()
     controls()
     while(c.health > 0):
         if c.xp >= 500 + (c.level**2):
             c.levelup(c.spec)
         choice = raw_input('> ')
-        if choice not in ['rest','hunt','explore','help','quit','status','attributes','d']:
+        choice = choice.lower()
+        if choice.lower() not in ['rest','hunt','explore','help','quit','status','attributes','potion','d','shop','inventory']:
             print 'That is not a valid choice.'
         elif choice == 'help':
             controls()
@@ -294,6 +340,31 @@ def start():
             print c
         elif choice == 'attributes':
             c.showAttributes()
+        elif choice == 'potion':
+            c.use_potion()
+        elif choice == 'shop':
+            print s
+            print "Input 'quit' to exit the store.\n"
+            buy_item = raw_input('What would you like to buy?\n')
+            while buy_item != 'quit':
+                if c.gold > s.inventory[buy_item]:
+                    c.gold -= s.inventory[buy_item]
+                    s.sell(buy_item)
+                    if c.inventory.has_key(buy_item):
+                        c.inventory[buy_item] += 1
+                    else:
+                        c.inventory[buy_item] = 1
+                    print "You purchased 1 " + buy_item + '.'
+                else:
+                    print 'Insufficient funds to purchase item.\n'
+                buy_item = raw_input('What would you like to buy?\n')
+        elif choice == 'inventory':
+            if c.inventory:
+                for key in c.inventory.keys():
+                    print str(c.inventory[key]) + ' ' + key + '\n'
+            else:
+                print 'Your bag seems to be empty.'
+                
         elif choice == 'quit': break
     print '\nYour journey has come to an end.'
     print 'You got to level ' + str(c.level) + '!'
